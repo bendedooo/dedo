@@ -1,0 +1,217 @@
+% 567 RW
+clc
+clear all
+close all
+
+seed = 1333; % rng seed for reproducibility
+% rng seed fix
+% s = rng;
+% s.Seed = seed;
+% rng(s.Seed)
+
+%% PART A
+
+numSteps = 100;
+runNumber = 100;
+pThreshold = 0.5;
+steps = generateRandomWalkSteps(runNumber,numSteps,pThreshold,seed);
+randomWalk = generateRandomWalk(steps);
+
+figure(1)
+plot(randomWalk','LineWidth',1.5,'Color',[0, 0.5, 0.5, 0.2])
+title('Question 2.1: Part 1','Random Walk')
+xlabel('N')
+ylabel('S')
+legend('Random Walk_n','Location','best')
+grid on
+
+figure(2)
+hist(randomWalk(:,end))
+% h.FaceColor = [0 0.5 0.5];
+title('Question 2.1: Part 1','Random Walk Histogram')
+xlabel('S_N')
+ylabel('Frequency')
+legend('Random Walk_n','Location','best')
+
+% figure(1)
+% rvSize = size(randomWalk);
+% for i=1:rvSize(1)-1
+% plot(randomWalk(i,:),'b-x','Marker','*','MarkerSize',4,'LineWidth',1)
+% hold on
+% end
+
+% scatter(init3(1),init3(2),40,'k*')
+% title('Problem 3: Part b','Inconsistent 2D Position Fix with Three Range Measurements')
+% xlabel('x')
+% ylabel('y')
+% legend('Fix 1','Fix 2','Fix 3','Initial Guess 1','Initial Guess 2','Initial Guess 3','Location','best')
+% grid on
+
+%% PART B
+
+% indicator func 1 if >10 0 otherwise  P(RW>10)=E(indicator func)
+
+distLimit = 10;
+totDist = [];
+
+% burda gx tanimliyoruz evaluator func olarak, thresholddan buyuk mu degil
+% mi diye bakicaz gf/q yapicaz fler hep 0.5^100 olacak qlar ise array
+% elemanlarina baksin 1se 0.25 diger 0.75 atasin bunlari carpinca q oluyo
+
+prob_b=evaluatorFunc(randomWalk,distLimit)
+
+
+
+
+sumType = 0; % 0: sum, 1: cumsum
+[estimate, samples, evaluations]=monteCarlo2(runNumber,numSteps,seed,pThreshold,distLimit,sumType)
+
+% function evaluatorFuncOut = evaluatorFunc(randomWalks, threshold)
+% 
+% totDist = randomWalks(:,end);
+% g_xTotDist = totDist;
+% g_xTotDist (totDist <= threshold) = 0;
+% g_xTotDist (totDist > threshold) = 1;
+% probDistLimit = sum(g_xTotDist)/length(g_xTotDist)
+% 
+% end
+
+%% ---------------------------------------- ust kisim ok ---------------------------------------- %%
+
+% 
+% function probWalk = prob_x(inputArray,pValue)
+% inputArray (inputArray ==  1) = 1-pValue ;
+% inputArray (inputArray == -1) = pValue ;
+% probWalk = prod(inputArray);
+% end
+
+pThresholdc = 0.2;
+distLimitc = 55;
+stepsc = generateRandomWalkSteps(runNumber,numSteps,pThresholdc,seed);
+randomWalkc = generateRandomWalk(stepsc);
+AA = indFunc(randomWalkc,distLimitc)
+
+
+f_x = prob_x();
+q_x = prob_x(1A);
+
+g_x = prob_x(array2);
+
+
+
+% burasi mc c 10^-9 civari
+sumType = 0; % 0: sum, 1: cumsum
+pThresholdc = 0.2;
+distLimitc = 55;
+[estimate, samples, evaluations] = ISmonteCarlo2(runNumber,numSteps,seed,pThreshold,pThresholdc,distLimit,distLimitc,sumType);
+
+% sum(evaluations/runNumber)
+
+
+
+
+
+% [estimate, samples, evaluations]=monteCarlo(numSteps,@generateRandomWalk,evaluatorFunc,sumType)
+
+
+for i=1:10^5
+seed  = seed + 1;
+steps = generateRandomWalkSteps(numSteps,seed);
+randomWalk = generateRandomWalk(steps);
+dist = randomWalk(end);
+totDist = [totDist dist];
+end
+
+indTotDist = totDist;
+indTotDist (totDist <= distLimit) = 0;
+indTotDist (totDist > distLimit) = 1;
+probDistLimit = sum(indTotDist)/length(indTotDist)
+
+%% c
+% seed = 1333; % rng seed for reproducibility
+
+pValue = 0.2;
+
+numSteps = 100;
+steps2 = generateRandomWalkSteps2(numSteps,seed);
+randomWalk2 = generateRandomWalk(steps2);
+
+figure(2)
+plot(randomWalk2,'b-x','LineWidth',1)
+
+distLimit = 55;
+totDist2 = [];
+
+for i=1:10^5
+seed  = seed + 1;
+steps2 = generateRandomWalkSteps2(numSteps,seed);
+randomWalk2 = generateRandomWalk(steps2);
+dist2 = randomWalk2(end);
+totDist2 = [totDist2 dist2];
+end
+
+indTotDist2 = totDist2;
+indTotDist2 (totDist2 <= distLimit) = 0;
+indTotDist2 (totDist2 > distLimit) = 1;
+probDistLimit = sum(indTotDist2)/length(indTotDist2)
+
+
+
+
+
+%% functions
+
+% generate a set of steps for a random walk
+% 
+% function X = generateRandomWalkSteps(numSteps,seed)
+% % rng seed fix
+% s = rng;
+% s.Seed = seed;
+% rng(s.Seed)
+% X = rand(1,numSteps); % sample from a unifrom
+% X (X < 0.5) = -1;
+% X (X > 0.5) =  1;
+% end
+
+% generate a rv that is shrunk in space and sped up in time from a sequence of steps
+
+% function X = generateRandomWalk(steps)
+%     X = [0];
+%     X = [X cumsum(steps)];
+% end
+
+
+function X = generateRandomWalkSteps2(numSteps,seed)
+% rng seed fix
+s = rng;
+s.Seed = seed;
+rng(s.Seed);
+X = rand(1,numSteps); % sample from a unifrom
+X (X < 0.2) = -1;
+X (X > 0.2) =  1;
+end
+
+% 
+% function (estimate samples evaluations) = monteCarlo(numSamples,sampleGenerator,gEvaluate,cumsum=false)
+% % Inputs
+% % num_samples: integer, number of samples
+% % sample_generator: A function that generates samples with signature sample_generator(nsamples)
+% % g_evaluator: a function that takes as inputs the samples and outputs the evaluations.
+% % The outputs can be any dimension, however the first dimension should have size *num_samples*
+% % cumsum: Boolean, an option to return estimators of all sample sizes up to num_samples
+% % 
+% %         Returns
+% %         -------
+% %         A Monte Carlo estimator of the mean, samples, and evaluations
+% 
+% samples = sampleGenerator(numSamples,seed);
+% evaluations = gEvaluator(samples);
+% if cumsum == false
+%     estimate = sum(evaluations) / (numSamples); % columnwise summation
+% else
+%     estimate = cumsum(evaluations) / (1:num_samples+1); % columnwise summation
+% end
+% end
+
+% 
+
