@@ -1,0 +1,128 @@
+%HW 4 P2
+
+clc
+clear all
+close all
+format long
+
+P0 = [0.7212 2.4080]';  % first known location coordinates [s3 s1 s2]=[x y z] [AU]
+P0x = P0(1);
+P0y = P0(2);
+
+
+L1 = [0 0]';  % first known location coordinates [s3 s1 s2]=[x y z] [AU]
+x1 = L1(1);
+y1 = L1(2);
+% z1 = L1(3);
+r1 = 2.5;
+
+L2 = [5 5]';  % second known location coordinates
+x2 = L2(1);
+y2 = L2(2);
+% z2 = L2(3);
+r2 = 5;
+
+
+L3 = [2.5 0]';  % second known location coordinates
+x3 = L3(1);
+y3 = L3(2);
+% z3 = L3(3);
+r3 = 3;
+
+L = [L1 L2 L3];
+
+D = 0.1*eye(3);
+
+meas = [r1 r2 r3];
+
+% statesEst = [xEst yEst]'
+
+% Q = 0;
+
+state0 = [4 4]';
+p0 = [0.01, 0.1, 1, 10];
+k  = 1:1:50;
+
+% p0 = [0.01];
+PTot = [];
+statesTot = [];
+
+for i=1:length(p0)
+    P00 = p0(i)*eye(2);
+    P =[P00];
+    P11 = P00;
+    state11 = state0;
+    states = [state0];
+    for j=1:length(k)
+        noise = diag(randn(3)).*eye(3); %?????
+        measNoisy = (meas + diag(D*noise)')';
+        [state22, P22] = KFP2(state11,P11,L,measNoisy);
+        P11 = P22;
+        state11 = state22;
+        P =cat(3,P,P11); % 2x2x52 nxnxk
+        states = cat(3,states,state11); % 2x1x52 nx1xk
+    end
+    PTot = [PTot P];
+    statesTot = [statesTot states];
+end
+
+
+edgeColorMatrix = [0 .5 .5;
+                   0.1 0.6 0.3;
+                   0.7 0.6 0.3;
+                   0.3 0.3 0.1];
+faceColorMatrix = [0 .7 .7;
+                   0.1 0.7 0.1;
+                   0.7 0.7 0.1;
+                   0.3 0.1 0.1];
+
+figure(1)
+
+for i=1:size(statesTot,2) % number of different trajectories with different p0 values
+posn = squeeze(statesTot(:,i,:));
+scatter(posn(1,:),posn(2,:),'MarkerEdgeColor',edgeColorMatrix(i,:),'MarkerFaceColor',faceColorMatrix(i,:),'LineWidth',1.5)%,'DisplayName',sprintf('p0=%10.1f',p0(i)))
+hold on
+plot(posn(1,:),posn(2,:),'Color',edgeColorMatrix(i,:),'LineWidth',1.5)%,'DisplayName','')
+% plot(posn(1,:),posn(1,:),'LineWidth',1.5,'Color',faceColorMatrix(i,:))
+end
+scatter(P0(1,:),P0(2,:),'ro','fill','LineWidth',1.5)
+% legend
+legend('p=0.01','','p=0.1','','p=1','','p=10','','Actual Location','Location','best')
+grid on
+xlabel('x [m]')
+ylabel('y [m]')
+title('Problem 2: 2D Trajectory')
+
+%% 
+
+PNorm = [];
+for i=1:size(statesTot,2) % number of different trajectories with different p0 values
+rangei = 2*i-1:2*i
+Pi = squeeze(PTot(:,2*i-1:2*i,:));
+PiNorm = [];
+for j=1:size(Pi,3)
+PjNorm = norm(Pi(:,:,j),'fro');
+PiNorm = [PiNorm PjNorm];
+end
+PNorm = [PNorm; PiNorm];
+end
+
+figure(2)
+for i=1:size(statesTot,2)
+
+semilogy([0 k],PNorm(i,:),'Color',edgeColorMatrix(i,:),'LineWidth',1.5)%,'DisplayName','')
+hold on
+scatter([0 k],PNorm(i,:),'MarkerEdgeColor',edgeColorMatrix(i,:),'MarkerFaceColor',faceColorMatrix(i,:),'LineWidth',1.5)%,'DisplayName',sprintf('p0=%10.1f',p0(i)))
+hold on
+end
+% legend('p=0.01','','p=0.1','','p=1','','p=10','','Location','best') %
+% Lege
+legend('','p=0.01','','p=0.1','','p=1','','p=10','Location','best')
+% legend('p=0.01','p=0.1','p=1','p=10','Location','best')
+grid on
+xlabel('Time Step')
+ylabel('Frobenius Norm')
+title('Problem 2: Frobenius Norm of the Error Covariance Matrix')
+
+
+
